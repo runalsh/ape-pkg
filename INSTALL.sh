@@ -3,6 +3,8 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 SUDO=""
 if [ "$(id -u)" -ne 0 ]; then
     SUDO="sudo"
@@ -62,7 +64,7 @@ $SUDO make install
 cd ../..
 
 # Install apepkg python script to /usr/bin/apepkg
-$SUDO cp apepkg /usr/bin/apepkg
+$SUDO cp "$SCRIPT_DIR/apepkg" /usr/bin/apepkg
 $SUDO chmod +x /usr/bin/apepkg
 
 # Cleanup
