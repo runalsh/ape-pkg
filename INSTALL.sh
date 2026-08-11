@@ -28,7 +28,7 @@ fi
 if [ "$OS" = "debian" ]; then
     echo "Installing build dependencies..."
     $SUDO apt-get update
-    $SUDO apt-get install -y build-essential libssl-dev libz-dev libxml2-dev git autoconf automake libtool msitools wixl
+    $SUDO apt-get install -y build-essential libssl-dev libz-dev libxml2-dev git autoconf automake libtool cpio file
 elif [ "$OS" = "redhat" ]; then
     echo "Installing build dependencies..."
     set +e
@@ -37,7 +37,7 @@ elif [ "$OS" = "redhat" ]; then
     $SUDO dnf install -y oracle-epel-release-el10 2>/dev/null
     $SUDO dnf install -y epel-release 2>/dev/null
     set -e
-    $SUDO dnf install -y gcc gcc-c++ make openssl-devel zlib-devel libxml2-devel git autoconf automake libtool msitools
+    $SUDO dnf install -y gcc gcc-c++ make openssl-devel zlib-devel libxml2-devel git autoconf automake libtool cpio file
 fi
 
 # Create temporary directory
