@@ -87,7 +87,7 @@ if ! command -v rcodesign &>/dev/null; then
 fi
 
 # Cleanup
-cd - > /dev/null
+cd "$SCRIPT_DIR" || cd /
 rm -rf "$TMPDIR"
 
 # Update library cache (Linux)
