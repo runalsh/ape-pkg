@@ -61,6 +61,10 @@ make
 $SUDO make install
 cd ../..
 
+# Install apepkg python script to /usr/bin/apepkg
+$SUDO cp apepkg /usr/bin/apepkg
+$SUDO chmod +x /usr/bin/apepkg
+
 # Cleanup
 cd - > /dev/null
 rm -rf "$TMPDIR"
