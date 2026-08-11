@@ -69,16 +69,21 @@ $SUDO chmod +x /usr/bin/apepkg
 
 # Install rcodesign for package signing if missing
 if ! command -v rcodesign &>/dev/null; then
-    echo "Installing rcodesign..."
+    echo "Installing latest rcodesign..."
     ARCH_NAME="$(uname -m)"
     if [ "$ARCH_NAME" = "aarch64" ]; then
-        RCODESIGN_URL="https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign/0.29.0/apple-codesign-0.29.0-aarch64-unknown-linux-musl.tar.gz"
+        FILTER_PATTERN="aarch64-unknown-linux-musl.tar.gz$"
     else
-        RCODESIGN_URL="https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign/0.29.0/apple-codesign-0.29.0-x86_64-unknown-linux-musl.tar.gz"
+        FILTER_PATTERN="x86_64-unknown-linux-musl.tar.gz$"
     fi
-    curl -sL "$RCODESIGN_URL" | tar -xz -C "$TMPDIR"
-    $SUDO cp "$TMPDIR"/apple-codesign-*/rcodesign /usr/bin/rcodesign
-    $SUDO chmod +x /usr/bin/rcodesign
+
+    LATEST_URL=$(curl -s https://api.github.com/repos/indygreg/apple-platform-rs/releases/latest | grep "browser_download_url" | grep "$FILTER_PATTERN" | head -n1 | cut -d '"' -f 4)
+
+    if [ -n "$LATEST_URL" ]; then
+        curl -sL "$LATEST_URL" | tar -xz -C "$TMPDIR"
+        $SUDO cp "$TMPDIR"/apple-codesign-*/rcodesign /usr/bin/rcodesign
+        $SUDO chmod +x /usr/bin/rcodesign
+    fi
 fi
 
 # Cleanup
