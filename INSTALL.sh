@@ -3,6 +3,11 @@
 
 set -e
 
+SUDO=""
+if [ "$(id -u)" -ne 0 ]; then
+    SUDO="sudo"
+fi
+
 echo "Installing apepkg dependencies..."
 
 # Detect OS
@@ -20,11 +25,12 @@ fi
 # Install system dependencies
 if [ "$OS" = "debian" ]; then
     echo "Installing build dependencies..."
-    sudo apt-get update
-    sudo apt-get install -y build-essential libssl-dev libz-dev git autoconf automake libtool
+    $SUDO apt-get update
+    $SUDO apt-get install -y build-essential libssl-dev libz-dev libxml2-dev git autoconf automake libtool msitools wixl
 elif [ "$OS" = "redhat" ]; then
     echo "Installing build dependencies..."
-    sudo dnf install -y gcc make openssl-devel zlib-devel git autoconf automake libtool
+    $SUDO dnf install -y oracle-epel-release-el9 epel-release 2>/dev/null || true
+    $SUDO dnf install -y gcc gcc-c++ make openssl-devel zlib-devel libxml2-devel git autoconf automake libtool msitools
 fi
 
 # Create temporary directory
@@ -35,18 +41,19 @@ cd "$TMPDIR"
 echo "Installing bomutils..."
 git clone https://github.com/hogliux/bomutils.git
 cd bomutils
-make
-sudo make install
+make CXXFLAGS="-fPIC -O2"
+$SUDO make install
 cd ..
 
 # Install xar
 echo "Installing xar..."
 git clone https://github.com/mackyle/xar.git
 cd xar/xar
+sed -i 's/OpenSSL_add_all_ciphers/EVP_get_cipherbyname/g' configure.ac
 ./autogen.sh
-./configure
+./configure --prefix=/usr
 make
-sudo make install
+$SUDO make install
 cd ../..
 
 # Cleanup
@@ -54,11 +61,7 @@ cd - > /dev/null
 rm -rf "$TMPDIR"
 
 # Update library cache (Linux)
-if [ "$OS" = "debian" ]; then
-    sudo ldconfig
-elif [ "$OS" = "redhat" ]; then
-    sudo ldconfig
-fi
+$SUDO ldconfig
 
 echo ""
 echo "Installation complete!"
