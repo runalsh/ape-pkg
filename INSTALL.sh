@@ -58,8 +58,8 @@ git clone https://github.com/mackyle/xar.git
 cd xar/xar
 sed -i 's/OpenSSL_add_all_ciphers/EVP_get_cipherbyname/g' configure.ac
 ./autogen.sh
-./configure ac_cv_lib_crypto_OpenSSL_add_all_ciphers=yes --prefix=/usr
-make
+./configure ac_cv_lib_crypto_OpenSSL_add_all_ciphers=yes --prefix=/usr CFLAGS="-g -O2 -Wno-error -Wno-implicit-function-declaration"
+make CFLAGS="-g -O2 -Wno-error -Wno-implicit-function-declaration"
 $SUDO make install
 cd ../..
 
