@@ -67,6 +67,20 @@ cd ../..
 $SUDO cp "$SCRIPT_DIR/apepkg" /usr/bin/apepkg
 $SUDO chmod +x /usr/bin/apepkg
 
+# Install rcodesign for package signing if missing
+if ! command -v rcodesign &>/dev/null; then
+    echo "Installing rcodesign..."
+    ARCH_NAME="$(uname -m)"
+    if [ "$ARCH_NAME" = "aarch64" ]; then
+        RCODESIGN_URL="https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign/0.29.0/apple-codesign-0.29.0-aarch64-unknown-linux-musl.tar.gz"
+    else
+        RCODESIGN_URL="https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign/0.29.0/apple-codesign-0.29.0-x86_64-unknown-linux-musl.tar.gz"
+    fi
+    curl -sL "$RCODESIGN_URL" | tar -xz -C "$TMPDIR"
+    $SUDO cp "$TMPDIR"/apple-codesign-*/rcodesign /usr/bin/rcodesign
+    $SUDO chmod +x /usr/bin/rcodesign
+fi
+
 # Cleanup
 cd - > /dev/null
 rm -rf "$TMPDIR"
