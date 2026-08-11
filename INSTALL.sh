@@ -29,7 +29,10 @@ if [ "$OS" = "debian" ]; then
     $SUDO apt-get install -y build-essential libssl-dev libz-dev libxml2-dev git autoconf automake libtool msitools wixl
 elif [ "$OS" = "redhat" ]; then
     echo "Installing build dependencies..."
-    $SUDO dnf install -y oracle-epel-release-el9 2>/dev/null || $SUDO dnf install -y oracle-epel-release-el8 2>/dev/null || $SUDO dnf install -y epel-release 2>/dev/null || true
+    $SUDO dnf install -y oracle-epel-release-el8 2>/dev/null || true
+    $SUDO dnf install -y oracle-epel-release-el9 2>/dev/null || true
+    $SUDO dnf install -y oracle-epel-release-el10 2>/dev/null || true
+    $SUDO dnf install -y epel-release 2>/dev/null || true
     $SUDO dnf install -y gcc gcc-c++ make openssl-devel zlib-devel libxml2-devel git autoconf automake libtool msitools
 fi
 
