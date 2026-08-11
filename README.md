@@ -62,6 +62,15 @@ chmod +x MyPackage/scripts/postinstall
 
 Your package is now at `MyPackage/build/MyPackage-1.0.pkg`!
 
+## Supported Linux Distributions
+
+`apepkg` and its automated `INSTALL.sh` installer have been tested and verified across:
+
+- **Ubuntu**: `22.04 LTS` (Jammy), `24.04 LTS` (Noble), `26.04` (Rolling/Devel)
+- **Debian**: `11` (Bullseye), `12` (Bookworm), `testing`
+- **Oracle Linux**: `8.x`, `9.x`, `10.x`
+- **RHEL / Rocky Linux / AlmaLinux / CentOS**: `8.x`, `9.x`
+
 ## Why apepkg?
 
 ✅ **Linux-based CI/CD** - Build macOS packages in GitHub Actions, GitLab CI, etc.
