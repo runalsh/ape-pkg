@@ -77,7 +77,14 @@ if ! command -v rcodesign &>/dev/null; then
         FILTER_PATTERN="x86_64-unknown-linux-musl.tar.gz$"
     fi
 
-    LATEST_URL=$(curl -s https://api.github.com/repos/indygreg/apple-platform-rs/releases/latest | grep "browser_download_url" | grep "$FILTER_PATTERN" | head -n1 | cut -d '"' -f 4)
+    LATEST_URL=$(curl -s https://api.github.com/repos/indygreg/apple-platform-rs/releases/latest | grep "browser_download_url" | grep "$FILTER_PATTERN" | head -n1 | cut -d '"' -f 4 || true)
+    if [ -z "$LATEST_URL" ]; then
+        if [ "$ARCH_NAME" = "aarch64" ]; then
+            LATEST_URL="https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-aarch64-unknown-linux-musl.tar.gz"
+        else
+            LATEST_URL="https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-unknown-linux-musl.tar.gz"
+        fi
+    fi
 
     if [ -n "$LATEST_URL" ]; then
         curl -sL "$LATEST_URL" | tar -xz -C "$TMPDIR"

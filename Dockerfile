@@ -32,7 +32,7 @@ RUN apt-get update -qq && \
 RUN ARCH="$(uname -m)" && \
     if [ "$ARCH" = "aarch64" ]; then RCODESIGN_ARCH="aarch64-unknown-linux-musl"; else RCODESIGN_ARCH="x86_64-unknown-linux-musl"; fi && \
     RCODESIGN_URL=$(curl -s https://api.github.com/repos/indygreg/apple-platform-rs/releases/latest | grep "browser_download_url" | grep "${RCODESIGN_ARCH}.tar.gz" | head -n1 | cut -d '"' -f 4) && \
-    if [ -z "$RCODESIGN_URL" ]; then RCODESIGN_URL="https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.33.0/apple-codesign-0.33.0-${RCODESIGN_ARCH}.tar.gz"; fi && \
+    if [ -z "$RCODESIGN_URL" ]; then RCODESIGN_URL="https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-${RCODESIGN_ARCH}.tar.gz"; fi && \
     curl -sL "$RCODESIGN_URL" | tar -xz -C /tmp && \
     cp /tmp/apple-codesign-*/rcodesign /usr/bin/rcodesign && \
     chmod +x /usr/bin/rcodesign && \
