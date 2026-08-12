@@ -62,6 +62,74 @@ chmod +x MyPackage/scripts/postinstall
 
 Your package is now at `MyPackage/build/MyPackage-1.0.pkg`!
 
+## Docker Usage (Offline Package Builder)
+
+`apepkg` provides a Dockerfile based on Ubuntu 24.04 containing all pre-installed dependencies (`apepkg`, `rcodesign`, `xar`, `mkbom`, `lsbom`) for building macOS packages inside a container without installing tools directly on the host system.
+
+### 1. Build the Docker Image
+
+```bash
+docker build -t apepkg-builder:ubuntu24.04 .
+```
+
+### 2. Build Package Project inside Container
+
+Mount your project directory to `/workspace` inside the container:
+
+```bash
+# Build the included HelloWorld example project inside the container
+docker run --rm \
+  -v $(pwd):/workspace \
+  -w /workspace \
+  apepkg-builder:ubuntu24.04 \
+  apepkg examples/HelloWorld
+
+# Output package will be created at: examples/HelloWorld/build/HelloWorld-1.0.pkg
+```
+
+### 3. Run Custom Build Script inside Container
+
+Execute a custom build script from your project repository inside the container:
+
+```bash
+docker run --rm \
+  -v $(pwd):/workspace \
+  -w /workspace \
+  apepkg-builder:ubuntu24.04 \
+  ./build.sh
+```
+
+### 4. Generate Certificate & Sign Package Inside Container
+
+You can generate a self-signed Developer ID Installer PKCS#12 certificate and sign your `.pkg` file with `rcodesign` directly inside the Docker container:
+
+```bash
+# 1. Create a self-signed Developer ID Installer certificate (PKCS#12 format)
+docker run --rm -v $(pwd):/workspace -w /workspace apepkg-builder:ubuntu24.04 bash -c "
+openssl req -x509 -newkey rsa:2048 -nodes \
+  -keyout dev_installer.key \
+  -out dev_installer.crt \
+  -days 365 \
+  -subj '/CN=Developer ID Installer: My Company, O=My Company, C=US'
+
+openssl pkcs12 -export -legacy \
+  -out dev_installer.p12 \
+  -inkey dev_installer.key \
+  -in dev_installer.crt \
+  -passout pass:password123
+"
+
+# 2. Build and sign package using rcodesign inside container
+docker run --rm -v $(pwd):/workspace -w /workspace apepkg-builder:ubuntu24.04 bash -c "
+apepkg examples/HelloWorld
+
+rcodesign sign \
+  --p12-file dev_installer.p12 \
+  --p12-password password123 \
+  examples/HelloWorld/build/HelloWorld-1.0.pkg
+"
+```
+
 ## Supported Linux Distributions
 
 `apepkg` and its automated `INSTALL.sh` installer have been tested and verified across:

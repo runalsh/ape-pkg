@@ -1,0 +1,156 @@
+name: Build, Test and Push apepkg Docker Image
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  test-native:
+    name: Test apepkg Natively on Host (Non-Docker)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install apepkg & dependencies natively
+        run: |
+          sudo ./INSTALL.sh
+          which apepkg rcodesign xar mkbom lsbom
+          apepkg --version
+          rcodesign --version
+
+      - name: Create self-signed PKCS#12 certificate
+        run: |
+          openssl req -x509 -newkey rsa:2048 -nodes \
+            -keyout /tmp/test_dev.key \
+            -out /tmp/test_dev.crt \
+            -days 365 \
+            -subj '/CN=Developer ID Installer: CI Test, O=CI Test, C=US'
+
+          openssl pkcs12 -export -legacy \
+            -out /tmp/test_dev.p12 \
+            -inkey /tmp/test_dev.key \
+            -in /tmp/test_dev.crt \
+            -passout pass:citestpass
+
+      - name: Build example package (HelloWorld)
+        run: |
+          apepkg examples/HelloWorld
+          test -f examples/HelloWorld/build/HelloWorld-1.0.pkg
+
+      - name: Sign example package with rcodesign
+        run: |
+          rcodesign sign \
+            --p12-file /tmp/test_dev.p12 \
+            --p12-password citestpass \
+            examples/HelloWorld/build/HelloWorld-1.0.pkg
+
+      - name: Validate signed XAR package structure
+        run: |
+          xar -t -f examples/HelloWorld/build/HelloWorld-1.0.pkg
+          echo "Native build and signing test passed!"
+
+  build-and-push-docker:
+    name: Build, Test & Push Docker Image
+    needs: test-native
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            runalsh/ape-pkg
+            ghcr.io/${{ github.repository_owner }}/ape-pkg
+          tags: |
+            type=raw,value=latest
+            type=raw,value=ubuntu24
+            type=sha,format=short
+
+      - name: Build local Docker image for testing
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          tags: apepkg-builder:test
+          cache-from: type=gha
+
+      - name: Test example build and signing INSIDE Docker container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace apepkg-builder:test bash -c "
+            set -e
+            echo '--> Generating self-signed cert inside container...'
+            openssl req -x509 -newkey rsa:2048 -nodes \
+              -keyout /tmp/docker_dev.key \
+              -out /tmp/docker_dev.crt \
+              -days 365 \
+              -subj '/CN=Developer ID Installer: Docker Test, O=Docker Test, C=US'
+
+            openssl pkcs12 -export -legacy \
+              -out /tmp/docker_dev.p12 \
+              -inkey /tmp/docker_dev.key \
+              -in /tmp/docker_dev.crt \
+              -passout pass:dockertestpass
+
+            echo '--> Building HelloWorld example package inside container...'
+            apepkg examples/HelloWorld
+
+            echo '--> Signing package with rcodesign inside container...'
+            rcodesign sign \
+              --p12-file /tmp/docker_dev.p12 \
+              --p12-password dockertestpass \
+              examples/HelloWorld/build/HelloWorld-1.0.pkg
+
+            echo '--> Verifying package structure inside container...'
+            xar -t -f examples/HelloWorld/build/HelloWorld-1.0.pkg
+          "
+          echo "Docker container build and signing test passed!"
+
+      - name: Push Docker image to registries
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

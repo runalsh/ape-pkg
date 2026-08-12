@@ -53,5 +53,4 @@ RUN which apepkg rcodesign xar mkbom lsbom && \
 
 WORKDIR /workspace
 
-ENTRYPOINT ["/bin/bash", "-c"]
-CMD ["apepkg --help"]
+CMD ["apepkg", "--help"]
