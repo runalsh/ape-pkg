@@ -64,12 +64,12 @@ Your package is now at `MyPackage/build/MyPackage-1.0.pkg`!
 
 ## Docker Usage (Offline Package Builder)
 
-`apepkg` provides a Dockerfile based on Ubuntu 24.04 containing all pre-installed dependencies (`apepkg`, `rcodesign`, `xar`, `mkbom`, `lsbom`) for building macOS packages inside a container without installing tools directly on the host system.
+`apepkg` provides an official Docker image (`runalsh/ape-pkg:ubuntu24`) containing all pre-installed dependencies (`apepkg`, `rcodesign`, `xar`, `mkbom`, `lsbom`) for building macOS packages inside a container without installing tools directly on the host system.
 
-### 1. Build the Docker Image
+### 1. Build local Docker Image (optional)
 
 ```bash
-docker build -t apepkg-builder:ubuntu24.04 .
+docker build -t runalsh/ape-pkg:ubuntu24 .
 ```
 
 ### 2. Build Package Project inside Container
@@ -81,7 +81,7 @@ Mount your project directory to `/workspace` inside the container:
 docker run --rm \
   -v $(pwd):/workspace \
   -w /workspace \
-  apepkg-builder:ubuntu24.04 \
+  runalsh/ape-pkg:ubuntu24 \
   apepkg examples/HelloWorld
 
 # Output package will be created at: examples/HelloWorld/build/HelloWorld-1.0.pkg
@@ -95,7 +95,7 @@ Execute a custom build script from your project repository inside the container:
 docker run --rm \
   -v $(pwd):/workspace \
   -w /workspace \
-  apepkg-builder:ubuntu24.04 \
+  runalsh/ape-pkg:ubuntu24 \
   ./build.sh
 ```
 
@@ -105,7 +105,7 @@ You can generate a self-signed Developer ID Installer PKCS#12 certificate and si
 
 ```bash
 # 1. Create a self-signed Developer ID Installer certificate (PKCS#12 format)
-docker run --rm -v $(pwd):/workspace -w /workspace apepkg-builder:ubuntu24.04 bash -c "
+docker run --rm -v $(pwd):/workspace -w /workspace runalsh/ape-pkg:ubuntu24 bash -c "
 openssl req -x509 -newkey rsa:2048 -nodes \
   -keyout dev_installer.key \
   -out dev_installer.crt \
@@ -120,7 +120,7 @@ openssl pkcs12 -export -legacy \
 "
 
 # 2. Build and sign package using rcodesign inside container
-docker run --rm -v $(pwd):/workspace -w /workspace apepkg-builder:ubuntu24.04 bash -c "
+docker run --rm -v $(pwd):/workspace -w /workspace runalsh/ape-pkg:ubuntu24 bash -c "
 apepkg examples/HelloWorld
 
 rcodesign sign \
